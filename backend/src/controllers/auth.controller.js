@@ -4,15 +4,17 @@ import { generateToken } from "../utils/jwt.js";
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, foodPreferences } = req.body;
 
     // Check if exists
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
+    if (existingUser)
+      return res.status(400).json({ message: "User already exists" });
 
     // Check indexNo exists
     const existingIndexNo = await User.findOne({ indexNo: req.body.indexNo });
-    if (existingIndexNo) return res.status(400).json({ message: "Index number already exists" });
+    if (existingIndexNo)
+      return res.status(400).json({ message: "Index number already exists" });
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
@@ -22,7 +24,14 @@ export const registerUser = async (req, res) => {
     const role = "user";
 
     // Create user
-    const user = await User.create({ name, email, password: hashedPassword, indexNo: req.body.indexNo, role });
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      indexNo: req.body.indexNo,
+      role,
+      foodPreferences: Array.isArray(foodPreferences) ? foodPreferences : [],
+    });
 
     res.status(201).json({
       _id: user._id,
@@ -31,6 +40,7 @@ export const registerUser = async (req, res) => {
       token: generateToken(user._id),
       indexNo: user.indexNo,
       role: user.role,
+      foodPreferences: user.foodPreferences,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -45,7 +55,8 @@ export const loginUser = async (req, res) => {
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid credentials" });
 
     res.json({
       _id: user._id,
@@ -53,6 +64,7 @@ export const loginUser = async (req, res) => {
       email: user.email,
       indexNo: user.indexNo,
       role: user.role,
+      foodPreferences: user.foodPreferences,
       token: generateToken(user._id),
     });
   } catch (error) {

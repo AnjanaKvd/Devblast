@@ -5,7 +5,10 @@ import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
 
 export default function Login() {
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -22,84 +25,55 @@ export default function Login() {
   };
 
   return (
-    <Box className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-white py-16 px-4">
-      <Paper elevation={3} className="form-container rounded-2xl">
-        <Typography variant="h4" className="form-title">
-          Welcome Back
+    <Box sx={{ minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', py: 4, px: 2 }}>
+      <Paper elevation={0} sx={{ borderRadius: 6, maxWidth: 375, width: '100%', p: 4, boxShadow: 'none', background: '#fff' }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, textAlign: 'center', mt: 6, mb: 6 }}>
+          Welcome Back!
         </Typography>
-        
-        {error && (
-          <Box className="mb-6 p-4 bg-red-50 rounded-lg">
-            <Typography color="error" className="text-center text-sm">
-              {error}
-            </Typography>
-          </Box>
-        )}
-
-        <form onSubmit={handleSubmit} className="form-group">
-          <div className="input-group">
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              variant="outlined"
-              className="form-field"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)'
-                },
-                '& .MuiInputLabel-root': {
-                  transform: 'translate(14px, 16px) scale(1)'
-                },
-                '& .MuiInputLabel-shrink': {
-                  transform: 'translate(14px, -9px) scale(0.75)'
-                }
-              }}
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-          </div>
-          
-          <div className="input-group">
-            <TextField
-              fullWidth
-              label="Password"
-              type="password"
-              variant="outlined"
-              className="form-field"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)'
-                },
-                '& .MuiInputLabel-root': {
-                  transform: 'translate(14px, 16px) scale(1)'
-                },
-                '& .MuiInputLabel-shrink': {
-                  transform: 'translate(14px, -9px) scale(0.75)'
-                }
-              }}
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
-          </div>
-
-          <div className="mt-8">
-            <Button 
-              fullWidth 
-              variant="contained" 
-              type="submit"
-              className="btn-primary h-14 text-base"
-            >
-              Sign In
-            </Button>
-          </div>
-
-          <Typography className="text-center text-gray-500 text-sm pt-4">
-            Don't have an account? {' '}
-            <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
-              Create Account
+        <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            label="Email"
+            type="email"
+            variant="outlined"
+            value={formData.email}
+            onChange={e => setFormData({ ...formData, email: e.target.value })}
+            sx={{ mb: 3, background: '#f5eaea', borderRadius: 2, '& .MuiOutlinedInput-root': { borderRadius: 2, background: '#f5eaea' } }}
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            type="password"
+            variant="outlined"
+            value={formData.password}
+            onChange={e => setFormData({ ...formData, password: e.target.value })}
+            sx={{ mb: 3, background: '#f5eaea', borderRadius: 2, '& .MuiOutlinedInput-root': { borderRadius: 2, background: '#f5eaea' } }}
+          />
+          <Typography sx={{ textAlign: 'center', color: '#888', fontSize: 14, mb: 3 }}>
+            Forgot Password? <span style={{ color: '#1976d2', fontWeight: 600, cursor: 'pointer' }}>Click Here</span>
+          </Typography>
+          <Button
+            fullWidth
+            variant="contained"
+            type="submit"
+            sx={{
+              background: '#ff7a3e',
+              color: '#fff',
+              borderRadius: 3,
+              height: 48,
+              fontSize: 18,
+              fontWeight: 700,
+              mb: 2,
+              boxShadow: 'none',
+              '&:hover': { background: '#ff7a3e' }
+            }}
+          >
+            Sign In
+          </Button>
+          <Typography sx={{ textAlign: 'center', color: '#888', fontSize: 15, mt: 2 }}>
+            Don’t have an account?{' '}
+            <Link to="/register" style={{ color: '#1976d2', fontWeight: 600 }}>
+              Sign Up
             </Link>
           </Typography>
         </form>

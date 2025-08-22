@@ -9,7 +9,8 @@ export default function Register() {
     name: '',
     email: '',
     password: '',
-    indexNo: ''
+    indexNo: '',
+    foodPreferences: []
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -36,63 +37,92 @@ export default function Register() {
   };
 
   return (
-    <Box className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-white py-16 px-4">
-      <Paper elevation={3} className="form-container rounded-2xl">
-        <Typography variant="h4" className="form-title">
-          Create Account
+    <Box sx={{ minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5dc', py: 4, px: 2 }}>
+      <Paper elevation={3} className="form-container rounded-2xl" style={{ maxWidth: 400, width: '100%', padding: 32 ,background: '#f2f2f2ff' }}>
+        <img src="..\src\assets\img1.jpg" alt="Food" style={{ width: '100%', borderRadius: 16, marginBottom: 24 }} />
+        <Typography variant="h4" style={{ fontWeight: 700, marginBottom: 8 }}>
+          Sign up Account
         </Typography>
-        
-        {error && (
-          <Box className="mb-6 p-4 bg-red-50 rounded-lg">
-            <Typography color="error" className="text-center text-sm">
+        <Typography style={{ color: '#888', marginBottom: 24 }}>
+          Hello, you must signup first to be able to use the application and enjoy all the features in grabGo
+        </Typography>
+        <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            label="Name"
+            variant="outlined"
+            value={formData.name}
+            onChange={e => setFormData({ ...formData, name: e.target.value })}
+            style={{ marginBottom: 16, borderRadius: 24 }}
+            InputProps={{ style: { borderRadius: 24 } }}
+          />
+          <TextField
+            fullWidth
+            label="Email Address"
+            type="email"
+            variant="outlined"
+            value={formData.email}
+            onChange={e => setFormData({ ...formData, email: e.target.value })}
+            style={{ marginBottom: 16, borderRadius: 24 }}
+            InputProps={{ style: { borderRadius: 24 } }}
+          />
+          <TextField
+            fullWidth
+            label="Index Number"
+            variant="outlined"
+            value={formData.indexNo}
+            onChange={e => setFormData({ ...formData, indexNo: e.target.value })}
+            style={{ marginBottom: 16, borderRadius: 24 }}
+            InputProps={{ style: { borderRadius: 24 } }}
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            type="password"
+            variant="outlined"
+            value={formData.password}
+            onChange={e => setFormData({ ...formData, password: e.target.value })}
+            style={{ marginBottom: 16, borderRadius: 24 }}
+            InputProps={{ style: { borderRadius: 24 } }}
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            type="password"
+            variant="outlined"
+            value={formData.confirmPassword}
+            onChange={handleConfirmPassword}
+            style={{ marginBottom: 8, borderRadius: 24 }}
+            InputProps={{ style: { borderRadius: 24 } }}
+          />
+          <Typography align="right" style={{ color: '#F2994A', fontWeight: 500, marginBottom: 24, cursor: 'pointer' }}>
+            Forgot Password?
+          </Typography>
+          {error && (
+            <Typography color="error" style={{ marginBottom: 16 }}>
               {error}
             </Typography>
-          </Box>
-        )}
-
-        <form onSubmit={handleSubmit} className="form-group">
-          {['name', 'email', 'indexNo', 'password', 'confirmPassword'].map((field) => (
-            <div key={field} className="input-group">
-              <TextField
-                fullWidth
-                label={field.charAt(0).toUpperCase() + field.slice(1).replace('No', ' Number')}
-                type={field === 'password' || field === 'confirmPassword' ? 'password' : field === 'email' ? 'email' : 'text'}
-                onChange={field === 'confirmPassword' ? handleConfirmPassword : (e) => setFormData({ ...formData, [field]: e.target.value })}
-                required
-                variant="outlined"
-                className="form-field"
-                value={formData[field]}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '12px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)'
-                  },
-                  '& .MuiInputLabel-root': {
-                    transform: 'translate(14px, 16px) scale(1)'
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -9px) scale(0.75)'
-                  }
-                }}
-              />
-            </div>
-          ))}
-
-          <div className="mt-8">
-            <Button 
-              fullWidth 
-              variant="contained" 
-              type="submit"
-              className="btn-primary h-14 text-base"
-            >
-              Create Account
-            </Button>
-          </div>
-
-          <Typography className="text-center text-gray-500 text-sm pt-4">
-            Already have an account? {' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-              Sign In
+          )}
+          <Button
+            fullWidth
+            variant="contained"
+            type="submit"
+            style={{
+              background: '#f15835ff',
+              color: '#fff',
+              borderRadius: 32,
+              height: 56,
+              fontSize: 18,
+              fontWeight: 700,
+              marginBottom: 16
+            }}
+          >
+            Sign Up
+          </Button>
+          <Typography align="center" style={{ color: '#888' }}>
+            Already have an account?{' '}
+            <Link to="/login" style={{ color: 'F15C2A', fontWeight: 600 }}>
+              Sign in
             </Link>
           </Typography>
         </form>

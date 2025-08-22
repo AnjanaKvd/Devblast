@@ -8,6 +8,16 @@ const userSchema = new mongoose.Schema(
     role: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    foodPreferences: {
+      type: [String],
+      enum: [
+        "Vegetarian",
+        "Non Vegetarian",
+        "Spicy Foods",
+        "Fast Foods & Snacks",
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );
@@ -15,6 +25,5 @@ const userSchema = new mongoose.Schema(
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
 
 export default mongoose.model("User", userSchema);
