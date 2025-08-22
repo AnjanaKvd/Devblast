@@ -10,33 +10,68 @@ import {
   Alert,
   Avatar,
   Stack,
+  Fade,
+  Zoom,
 } from '@mui/material';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
+
+// --- Import Icons ---
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
+import LocalCafeIcon from '@mui/icons-material/LocalCafe';
+import FastfoodIcon from '@mui/icons-material/Fastfood';
+import QueueIcon from '@mui/icons-material/Queue';
+
 // Import Navbar and Footer
 import EnhancedNavbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-// A small component for displaying profile items to keep the main component clean
-const ProfileDetailItem = ({ label, value }) => (
-  <Grid container item xs={12} alignItems="center">
-    <Grid item xs={4} sm={3}>
-      <Typography variant="subtitle1" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
-        {label}
-      </Typography>
-    </Grid>
-    <Grid item xs={8} sm={9}>
-      <Typography variant="body1" sx={{ color: 'text.primary' }}>
-        {value}
-      </Typography>
-    </Grid>
-  </Grid>
+// A new component for the rounded category boxes
+const CategoryCard = ({ title, icon, onClick, highlighted = false }) => (
+  <motion.div
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+  >
+    <Paper
+      onClick={onClick}
+      elevation={highlighted ? 4 : 2}
+      sx={{
+        p: { xs: 2, sm: 3 },
+        borderRadius: '20px', // More rounded corners
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        cursor: 'pointer',
+        transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
+        },
+        border: highlighted ? '2px solid rgba(25, 118, 210, 0.2)' : 'none',
+        backgroundColor: highlighted ? 'rgba(25, 118, 210, 0.05)' : 'background.paper',
+      }}
+    >
+      {icon}
+      <Box>
+        <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
+          {title}
+        </Typography>
+        {highlighted && (
+          <Typography variant="caption" color="primary.main" sx={{ display: 'block', mt: 0.5 }}>
+            Try our new rice plate builder!
+          </Typography>
+        )}
+      </Box>
+    </Paper>
+  </motion.div>
 );
 
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [animatingToMealBuilder, setAnimatingToMealBuilder] = useState(false);
 
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -63,6 +98,29 @@ export default function Dashboard() {
     navigate('/login');
   };
   
+  const handleNavigateToMealBuilder = () => {
+    setAnimatingToMealBuilder(true);
+    // Add a delay for the animation to complete before navigating
+    setTimeout(() => {
+      navigate('/meal-builder', { state: { from: 'dashboard', selectedOption: 'rice-curry' } });
+    }, 500);
+  };
+  
+  const handleNavigateToDrinksSnacks = () => {
+    setAnimatingToMealBuilder(true); // Reuse the same animation state
+    // Add a delay for the animation to complete before navigating
+    setTimeout(() => {
+      navigate('/drinks-snacks', { state: { from: 'dashboard', selectedOption: 'drinks-snacks' } });
+    }, 500);
+  };
+  
+  const handleNavigateToQueue = () => {
+    setAnimatingToMealBuilder(true);
+    setTimeout(() => {
+      navigate('/queue');
+    }, 500);
+  };
+  
   const renderContent = () => {
     if (loading) {
       // Skeleton loader for a better UX while data is fetching
@@ -72,21 +130,20 @@ export default function Dashboard() {
             <Skeleton variant="circular" width={60} height={60} />
             <Skeleton variant="text" width={200} height={40} />
           </Stack>
-          <Skeleton variant="rectangular" height={40} />
-          <Skeleton variant="rectangular" height={40} />
-          <Skeleton variant="rectangular" height={40} />
-          <Skeleton variant="rectangular" height={40} />
+          <Skeleton variant="text" width={100} height={30} sx={{ mb: 1 }}/>
+          <Skeleton variant="rectangular" height={80} sx={{ borderRadius: '20px' }} />
+          <Skeleton variant="rectangular" height={80} sx={{ borderRadius: '20px' }} />
+          <Skeleton variant="rectangular" height={80} sx={{ borderRadius: '20px' }} />
         </Stack>
       );
     }
     
     if (error) {
-      // Clear error message if the API call fails
       return <Alert severity="error">{error}</Alert>;
     }
 
     if (profile) {
-      // The actual profile data
+      // The actual profile data and new category boxes
       return (
         <>
           <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 4 }}>
@@ -98,36 +155,80 @@ export default function Dashboard() {
                 Welcome, {profile.name}!
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {profile.email}
+                Ready to order?
               </Typography>
             </Box>
           </Stack>
 
-          <Grid container spacing={2}>
-            <ProfileDetailItem label="Name: " value={profile.name} />
-            <ProfileDetailItem label="Email: " value={profile.email} />
-            <ProfileDetailItem label="Index Number: " value={profile.indexNo} />
-            <ProfileDetailItem label="Role: " value={profile.role} />
-          </Grid>
+          {/* New Category Section */}
+          <Box>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'text.secondary' }}>
+              Categories
+            </Typography>
+            <Stack spacing={2}>
+              <Zoom in={!animatingToMealBuilder} timeout={500}>
+                <Box>
+                  <CategoryCard
+                    title="Rice & Curry"
+                    icon={<RestaurantMenuIcon sx={{ fontSize: 36, color: 'primary.main' }} />}
+                    onClick={handleNavigateToMealBuilder}
+                    highlighted={true}
+                  />
+                </Box>
+              </Zoom>
+              <Fade in={!animatingToMealBuilder} timeout={500}>
+                <Box>
+                  <CategoryCard
+                    title="Drinks & Snacks"
+                    icon={<LocalCafeIcon sx={{ fontSize: 36, color: 'secondary.main' }} />}
+                    onClick={handleNavigateToDrinksSnacks}
+                    highlighted={true}
+                  />
+                </Box>
+              </Fade>
+              <Fade in={!animatingToMealBuilder} timeout={500}>
+                <Box>
+                  <CategoryCard
+                    title="Other"
+                    icon={<FastfoodIcon sx={{ fontSize: 36, color: 'warning.main' }} />}
+                    onClick={() => navigate('/menu/other')}
+                  />
+                </Box>
+              </Fade>
+              <Fade in={!animatingToMealBuilder} timeout={500}>
+                <Box>
+                  <CategoryCard
+                    title="View Queue"
+                    icon={<QueueIcon sx={{ fontSize: 36, color: 'info.main' }} />}
+                    onClick={handleNavigateToQueue}
+                    highlighted={true}
+                  />
+                </Box>
+              </Fade>
+            </Stack>
+          </Box>
         </>
       );
     }
     
-    return null; // Should not happen in normal flow
+    return null;
   };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', display: 'flex', flexDirection: 'column' }}>
       <EnhancedNavbar 
         onLogout={handleLogout} 
-        userName={profile?.name} // Pass the name to the navbar
+        userName={profile?.name}
       />
-      <Container maxWidth="md" sx={{ py: 4, flexGrow: 1 }}>
+      {/* Changed maxWidth to "sm" for a more mobile-like feel */}
+      <Container maxWidth="sm" sx={{ py: 4, flexGrow: 1 }}>
         <Paper
-          elevation={2}
+          elevation={0}
           sx={{
-            p: { xs: 2, sm: 4 }, // Responsive padding
-            borderRadius: '16px',
+            p: { xs: 2, sm: 3 },
+            borderRadius: '24px',
+            // A subtle background color to differentiate from the main page background
+            bgcolor: 'background.paper',
             boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
           }}
         >

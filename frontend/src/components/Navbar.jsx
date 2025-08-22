@@ -11,10 +11,15 @@ import {
   Menu,
   MenuItem,
   Divider,
+  Tabs,
+  Tab,
 } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard'; // For a nice icon
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import { Link } from '@mui/material';
 
 // A good practice is to pass user details as props
@@ -46,6 +51,9 @@ export default function EnhancedNavbar({ userName = 'Student', onLogout }) {
     navigate('/profile');
   };
 
+  // check user is staff
+  const isStaff = user.isStaff;
+
   return (
     <AppBar
       position="static"
@@ -61,11 +69,39 @@ export default function EnhancedNavbar({ userName = 'Student', onLogout }) {
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <DashboardIcon sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-            {/* FIX: The Link component can now be used */}
             <Link href="/" sx={{ textDecoration: 'none', color: 'inherit' }}>
               Dashboard
             </Link>
           </Typography>
+        </Box>
+
+        {/* Navigation Links */}
+        <Box sx={{ flexGrow: 1, display: 'flex', ml: 4 }}>
+          <Button 
+            color="inherit" 
+            startIcon={<RestaurantMenuIcon />}
+            onClick={() => navigate('/meal-builder')}
+            sx={{ mr: 2 }}
+          >
+            Order Food
+          </Button>
+          <Button 
+            color="inherit" 
+            startIcon={<ReceiptLongIcon />}
+            onClick={() => navigate('/queue')}
+            sx={{ mr: 2 }}
+          >
+            View Queue
+          </Button>
+          if (isStaff) {
+            <Button
+              color="inherit"
+              startIcon={<AdminPanelSettingsIcon />}
+              onClick={() => navigate('/admin')}
+            >
+              Staff Dashboard
+            </Button>
+          }
         </Box>
 
         {/* This Box will grow and push the profile section to the right */}
