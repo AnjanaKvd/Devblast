@@ -1,0 +1,85 @@
+/* If not using Tailwind, remove these lines and include equivalent CSS resets and utilities manually. */
+/* Example: */
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #f6f7f9 0%, #ffffff 100%);
+  color: #1a1a1a;
+}
+
+:root {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --bg-gradient: linear-gradient(135deg, #f6f7f9 0%, #ffffff 100%);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg-gradient);
+  color: #1a1a1a;
+}
+
+/* Form utilities */
+.form-group {
+  width: 100%;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field {
+  transition: all 0.2s;
+  border-radius: 0.5rem;
+  background: rgba(255,255,255,0.8);
+}
+.form-field:focus-within {
+  box-shadow: 0 0 0 2px #3b82f6;
+  /* blue-500 */
+  opacity: 0.5;
+}
+
+.form-field .MuiInputBase-root {
+  height: 3.5rem;
+}
+
+.form-field .MuiInputLabel-root {
+  transform: translateY(0.25rem);
+}
+
+.form-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+.btn-primary:hover {
+  background: #1d4ed8;
+  box-shadow: 0 8px 24px 0 rgba(59,130,246,0.25);
+}

@@ -1,0 +1,34 @@
+/* app.css - app container + layout styles */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.App {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.App-header {
+  padding: 1rem;
+  background-color: #1a1a1a;
+  color: white;
+  text-align: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 2rem auto;
+  padding: 2.5rem 2rem;
+}
