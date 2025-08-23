@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Container, 
@@ -10,12 +10,15 @@ import {
   useTheme,
   Card,
   CardContent,
-  Button
+  Button,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import TokenCardAdmin from '../components/TokenCardAdmin';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import * as api from '../services/api';
 
 // Mock data for testing - will be replaced with API calls
 const initialTokens = [
@@ -32,7 +35,9 @@ const initialTokens = [
 const QueueDashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [tokens, setTokens] = useState(initialTokens);
+  const [tokens, setTokens] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [tabValue, setTabValue] = useState(0);
   const [counters, setCounters] = useState([1, 2]); // Available counters
   const [stats, setStats] = useState({
@@ -40,6 +45,62 @@ const QueueDashboard = () => {
     avgWaitTime: 0,
     pendingOrders: 0
   });
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Fetch orders from API
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.getOrders();
+      
+      // Map API orders to our token format
+      const mappedTokens = data.map(order => ({
+        id: order.id || `A${Math.floor(Math.random() * 1000)}`,
+        counter: order.counter || 1,
+        timeRemaining: calculateTimeRemaining(order.createdAt),
+        status: order.status === 'completed' ? 'served' : 
+                order.status === 'in-progress' ? 'active' : 'queued',
+        type: getOrderTypes(order.items),
+        timestamp: new Date(order.createdAt),
+        orderId: order._id // Keep track of the actual order ID for API calls
+      }));
+      
+      setTokens(mappedTokens);
+      setError('');
+    } catch (err) {
+      setError('Failed to fetch orders');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  // Calculate time remaining based on order creation time
+  const calculateTimeRemaining = (createdAt) => {
+    const orderTime = new Date(createdAt);
+    const now = new Date();
+    // Estimate 15 minutes from order to completion
+    const estimatedCompletionTime = new Date(orderTime.getTime() + 15 * 60000);
+    const remainingMs = estimatedCompletionTime - now;
+    
+    return Math.max(0, Math.floor(remainingMs / 60000)); // Convert to minutes
+  };
+  
+  // Extract order types from items
+  const getOrderTypes = (items) => {
+    if (!items || !items.length) return ['other'];
+    
+    const types = new Set();
+    items.forEach(item => {
+      if (item.category) {
+        types.add(item.category);
+      } else if (item.type) {
+        types.add(item.type);
+      }
+    });
+    
+    return Array.from(types).length > 0 ? Array.from(types) : ['other'];
+  };
   
   // Filter tokens based on selected tab
   const getFilteredTokens = () => {
@@ -63,37 +124,73 @@ const QueueDashboard = () => {
   };
   
   // Handle marking a token as ready/served
-  const handleMarkReady = (tokenId) => {
-    setTokens(prev => {
-      const updated = prev.map(token => {
-        if (token.id === tokenId) {
-          return { ...token, status: 'served' };
-        }
-        return token;
-      });
+  const handleMarkReady = async (tokenId) => {
+    const token = tokens.find(t => t.id === tokenId);
+    if (!token || !token.orderId) return;
+    
+    try {
+      await api.updateOrderStatus(token.orderId, 'completed');
       
-      // Find next token to make active
-      const nextInQueue = updated.find(t => t.status === 'queued');
-      if (nextInQueue) {
-        return updated.map(token => {
-          if (token.id === nextInQueue.id) {
-            return { ...token, status: 'active', timeRemaining: 0 };
+      // Update local state
+      setTokens(prev => {
+        const updated = prev.map(token => {
+          if (token.id === tokenId) {
+            return { ...token, status: 'served' };
           }
           return token;
         });
-      }
+        
+        // Find next token to make active if applicable
+        const servingCounter = token.counter;
+        const nextInQueue = updated
+          .filter(t => t.status === 'queued' && t.counter === servingCounter)
+          .sort((a, b) => a.timestamp - b.timestamp)[0];
+          
+        if (nextInQueue) {
+          return updated.map(token => {
+            if (token.id === nextInQueue.id) {
+              return { ...token, status: 'active', timeRemaining: 0 };
+            }
+            return token;
+          });
+        }
+        
+        return updated;
+      });
       
-      return updated;
-    });
-    
-    // Update stats
-    setStats(prev => ({
-      ...prev,
-      totalServed: prev.totalServed + 1
-    }));
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        totalServed: prev.totalServed + 1,
+        pendingOrders: Math.max(0, prev.pendingOrders - 1)
+      }));
+    } catch (err) {
+      setError('Failed to update order status');
+      console.error(err);
+    }
   };
   
-  // Update tokens every minute to simulate time passing
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(timer);
+  }, []);
+  
+  // Fetch orders initially and update at intervals
+  useEffect(() => {
+    fetchOrders();
+    
+    const refreshInterval = setInterval(() => {
+      fetchOrders();
+    }, 30000); // Refresh every 30 seconds
+    
+    return () => clearInterval(refreshInterval);
+  }, [fetchOrders]);
+  
+  // Update token time remaining at intervals
   useEffect(() => {
     const timer = setInterval(() => {
       setTokens(prevTokens => {
@@ -112,36 +209,7 @@ const QueueDashboard = () => {
     return () => clearInterval(timer);
   }, []);
   
-  // Simulate new orders coming in
-  useEffect(() => {
-    const addNewToken = setInterval(() => {
-      const lastToken = tokens[tokens.length - 1];
-      const newTokenId = 'A' + (parseInt(lastToken.id.substring(1)) + 1);
-      
-      // Add new token to queue
-      setTokens(prev => [
-        ...prev,
-        { 
-          id: newTokenId, 
-          counter: Math.random() > 0.5 ? 1 : 2,
-          timeRemaining: 15 + Math.floor(Math.random() * 10),
-          status: 'queued',
-          type: ['rice', 'drinks', 'snacks'].filter(() => Math.random() > 0.5),
-          timestamp: new Date()
-        }
-      ]);
-      
-      // Update stats
-      setStats(prev => ({
-        ...prev,
-        pendingOrders: prev.pendingOrders + 1
-      }));
-    }, 120000); // Add new token every 2 minutes
-    
-    return () => clearInterval(addNewToken);
-  }, [tokens]);
-  
-  // Update stats
+  // Update stats when tokens change
   useEffect(() => {
     const served = tokens.filter(t => t.status === 'served');
     const pending = tokens.filter(t => t.status !== 'served');
@@ -170,7 +238,7 @@ const QueueDashboard = () => {
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Button 
             startIcon={<ArrowBackIcon />} 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/admin')}
             sx={{ mr: 2 }}
           >
             Back
@@ -179,17 +247,25 @@ const QueueDashboard = () => {
             Canteen Queue Dashboard
           </Typography>
         </Box>
-        <Button 
-          variant="contained" 
-          color="primary"
-          onClick={() => navigate('/queue')}
-        >
-          View Customer Queue
-        </Button>
+        <Box>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={fetchOrders}
+            sx={{ mr: 2 }}
+          >
+            Refresh Queue
+          </Button>
+          <Typography variant="body1" component="span">
+            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Typography>
+        </Box>
       </Box>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         Manage token orders and view real-time queue status
       </Typography>
+      
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       
       {/* Stats cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -276,35 +352,41 @@ const QueueDashboard = () => {
         </Tabs>
       </Box>
       
-      {/* Token grid */}
-      <Grid container spacing={3}>
-        <AnimatePresence>
-          {getFilteredTokens().map(token => (
-            <Grid 
-              item 
-              key={token.id} 
-              xs={12} 
-              sm={6} 
-              md={4} 
-              lg={3}
-              component={motion.div}
-              layout
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, x: -100, scale: 0.8 }}
-              transition={{ duration: 0.3 }}
-            >
-              <TokenCardAdmin 
-                token={token} 
-                onMarkReady={handleMarkReady} 
-              />
-            </Grid>
-          ))}
-        </AnimatePresence>
-      </Grid>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        /* Token grid */
+        <Grid container spacing={3}>
+          <AnimatePresence>
+            {getFilteredTokens().map(token => (
+              <Grid 
+                item 
+                key={token.id} 
+                xs={12} 
+                sm={6} 
+                md={4} 
+                lg={3}
+                component={motion.div}
+                layout
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, x: -100, scale: 0.8 }}
+                transition={{ duration: 0.3 }}
+              >
+                <TokenCardAdmin 
+                  token={token} 
+                  onMarkReady={handleMarkReady} 
+                />
+              </Grid>
+            ))}
+          </AnimatePresence>
+        </Grid>
+      )}
       
       {/* Empty state */}
-      {getFilteredTokens().length === 0 && (
+      {!loading && getFilteredTokens().length === 0 && (
         <Box 
           sx={{ 
             p: 4, 

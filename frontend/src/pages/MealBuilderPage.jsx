@@ -369,43 +369,76 @@ export default function MealBuilderPage() {
   // Entry animation state
   const [entryAnimationComplete, setEntryAnimationComplete] = useState(!fromDashboard);
 
-  // Mock data for testing (remove in production)
+  // Fetch rice and curries from the backend
   useEffect(() => {
-    const mockData = {
-      riceOptions: [
-        { id: 1, name: 'White Rice', price: 250, type: 'white', imageUrl: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?q=80&w=150&auto=format&fit=crop' },
-        { id: 2, name: 'Red Rice', price: 300, type: 'red', imageUrl: 'https://images.unsplash.com/photo-1626776876729-bab4991e743e?q=80&w=150&auto=format&fit=crop' },
-        { id: 3, name: 'Fried Rice', price: 450, type: 'fried', imageUrl: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?q=80&w=150&auto=format&fit=crop' }
-      ],
-      curryOptions: [
-        { id: 4, name: 'Chicken Curry', price: 350, imageUrl: 'https://images.unsplash.com/photo-1604344799811-36f1db28bd5d?q=80&w=150&auto=format&fit=crop' },
-        { id: 5, name: 'Fish Curry', price: 300, imageUrl: 'https://images.unsplash.com/photo-1626076598400-9ccb178cb3a9?q=80&w=150&auto=format&fit=crop' },
-        { id: 6, name: 'Dhal Curry', price: 150, imageUrl: 'https://images.unsplash.com/photo-1628151015968-3a4429e9ef84?q=80&w=150&auto=format&fit=crop' },
-        { id: 7, name: 'Beef Curry', price: 450, imageUrl: 'https://images.unsplash.com/photo-1522881451255-f59ad836fdfb?q=80&w=150&auto=format&fit=crop' }
-      ],
-      extrasOptions: [
-        { id: 8, name: 'Papadam', price: 50, imageUrl: 'https://images.unsplash.com/photo-1695848934569-dbf252c7b611?q=80&w=150&auto=format&fit=crop' },
-        { id: 9, name: 'Mango Chutney', price: 100, imageUrl: 'https://images.unsplash.com/photo-1679058154083-ebe6c0bc6344?q=80&w=150&auto=format&fit=crop' },
-        { id: 10, name: 'Extra Spicy', price: 0, imageUrl: 'https://images.unsplash.com/photo-1649099892868-1a5cc9076a89?q=80&w=150&auto=format&fit=crop' }
-      ]
+    const fetchMealOptions = async () => {
+      try {
+        setLoading(true);
+        // Fetch all rice and curry items
+        const { data } = await api.getRiceCurries();
+        
+        // Categorize items based on their type
+        const categorizedItems = data.reduce((acc, item) => {
+          if (item.type === 'rice') {
+            acc.riceOptions.push({
+              id: item._id,
+              name: item.name,
+              price: item.price,
+              type: item.variant || 'white',
+              imageUrl: item.image || 'https://images.unsplash.com/photo-1541014741259-de529411b96b?q=80&w=150&auto=format&fit=crop'
+            });
+          } else if (item.type === 'curry') {
+            acc.curryOptions.push({
+              id: item._id,
+              name: item.name,
+              price: item.price,
+              type: item.category || 'curry',
+              imageUrl: item.image || 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=150&auto=format&fit=crop'
+            });
+          } else if (item.type === 'extra') {
+            acc.extrasOptions.push({
+              id: item._id,
+              name: item.name,
+              price: item.price,
+              type: 'extra',
+              imageUrl: item.image || 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?q=80&w=150&auto=format&fit=crop'
+            });
+          }
+          return acc;
+        }, { riceOptions: [], curryOptions: [], extrasOptions: [] });
+        
+        setOptions(categorizedItems);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching meal options:', err);
+        setError('Could not load menu. Please try again later.');
+        
+        // Fallback to mock data if API fails
+        const mockData = {
+          riceOptions: [
+            { id: '1', name: 'White Rice', price: 250, type: 'white', imageUrl: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?q=80&w=150&auto=format&fit=crop' },
+          ],
+          curryOptions: [
+            { id: '2', name: 'Chicken Curry', price: 350, type: 'curry', imageUrl: 'https://images.unsplash.com/photo-1604344799811-36f1db28bd5d?q=80&w=150&auto=format&fit=crop' },
+          ],
+          extrasOptions: [
+            { id: '3', name: 'Papadam', price: 50, type: 'extra', imageUrl: 'https://images.unsplash.com/photo-1695848934569-dbf252c7b611?q=80&w=150&auto=format&fit=crop' },
+          ]
+        };
+        setOptions(mockData);
+      } finally {
+        setLoading(false);
+        
+        // If coming from dashboard, trigger entry animation
+        if (fromDashboard) {
+          setTimeout(() => {
+            setEntryAnimationComplete(true);
+          }, 1000);
+        }
+      }
     };
-    
-    setOptions(mockData);
-    setLoading(false);
-    
-    // Comment this out and uncomment the API call below for production
-    // api.getMealBuilderOptions()
-    //   .then(({ data }) => setOptions(data))
-    //   .catch(() => setError('Could not load menu. Try again! 😵‍💫'))
-    //   .finally(() => setLoading(false));
-    
-    // If coming from dashboard, trigger entry animation
-    if (fromDashboard) {
-      // Set a delay to complete the entry animation
-      setTimeout(() => {
-        setEntryAnimationComplete(true);
-      }, 1000);
-    }
+
+    fetchMealOptions();
   }, [fromDashboard]);
 
   // Recalculate total price
@@ -523,10 +556,59 @@ export default function MealBuilderPage() {
     }
   };
   
-  // Handle confirmation
-  const handleConfirm = () => {
-    // Instead of generating a token, show options to proceed
-    setShowConfirmation(true);
+  // Handle confirmation and submit order to backend
+  const handleConfirm = async () => {
+    try {
+      setLoading(true);
+      
+      // Prepare order items with proper schema for backend
+      const orderItems = [
+        { item: selectedRice.id, quantity: 1 },
+        ...selectedCurries.map(curry => ({ item: curry.id, quantity: 1 })),
+        ...selectedExtras.map(extra => ({ item: extra.id, quantity: 1 }))
+      ];
+
+      // Prepare order data for backend
+      const orderData = {
+        items: orderItems,
+        totalAmount: totalPrice,
+        customerIndex: '1', // Ensure this is a string to match the schema
+        orderType: 'meal-builder' // Add order type for tracking
+      };
+      
+      console.log('Submitting order:', orderData); // Debug log
+
+      // Submit order to backend
+      const response = await api.submitOrder(orderData);
+      
+      if (response.data) {
+        // Save the token from the response
+        const token = response.data.token || response.data.orderToken;
+        setOrderToken(token);
+        
+        // Store the token in localStorage for queue highlighting
+        localStorage.setItem('userToken', token);
+        
+        // Show confirmation screen
+        setShowConfirmation(true);
+        
+        // After a delay, redirect to the queue page
+        setTimeout(() => {
+          navigate('/queue', { 
+            state: { 
+              from: 'mealbuilder',
+              newOrder: { ...orderData, token },
+              animate: true
+            }
+          });
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      setError(error.response?.data?.message || 'Failed to submit order. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
   
   // Handle navigation to drinks and snacks page
@@ -535,49 +617,9 @@ export default function MealBuilderPage() {
       state: { 
         from: 'mealbuilder', 
         mealPrice: totalPrice,
-        mealItems: [selectedRice, ...selectedCurries, ...selectedExtras].filter(Boolean),
-        selectedTime: formatTimeForDisplay(selectedTimeObj)
-      } 
+        mealItems: [selectedRice, ...selectedCurries, ...selectedExtras].filter(Boolean)
+      }
     });
-  };
-  
-  // Handle finalizing the order
-  const handleFinalizeOrder = () => {
-    // Generate a random token (in a real app, this would come from the backend)
-    const token = Math.random().toString(36).substring(2, 10).toUpperCase();
-    
-    // Create a new order data object
-    const orderData = {
-      id: token,
-      orderType: selectedRice ? 'rice-curry' : 'other',
-      items: [selectedRice, ...selectedCurries, ...selectedExtras].filter(Boolean),
-      totalPrice: totalPrice,
-      status: 'pending',
-      counter: Math.floor(Math.random() * 3) + 1, // Random counter 1-3
-      estimatedTime: 10 + Math.floor(Math.random() * 10), // 10-20 minutes
-      createdAt: new Date().toISOString(),
-    };
-    
-    // In a real application, we would send this to the backend
-    // For now, let's store it in localStorage
-    const existingOrders = JSON.parse(localStorage.getItem('queueOrders') || '[]');
-    localStorage.setItem('queueOrders', JSON.stringify([...existingOrders, orderData]));
-    
-    // Also store the current user's token to highlight it in the queue
-    localStorage.setItem('userToken', token);
-    
-    setOrderToken(token);
-    
-    // After a delay, redirect to the queue page
-    setTimeout(() => {
-      navigate('/queue', { 
-        state: { 
-          from: 'payment', 
-          newOrder: orderData,
-          animate: true
-        }
-      });
-    }, 3000);
   };
   
   const selectedItems = [selectedRice, ...selectedCurries, ...selectedExtras].filter(Boolean);
@@ -1326,4 +1368,4 @@ export default function MealBuilderPage() {
       </AnimatePresence>
     </Box>
   );
-}
+};

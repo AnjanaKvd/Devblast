@@ -9,7 +9,9 @@ import MealBuilderPage from './pages/MealBuilderPage';
 import DrinksAndSnacksPage from './pages/DrinksAndSnacksPage';
 import QueuePage from './pages/QueuePage';
 import QueueDashboard from './pages/QueueDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 import { BrowserRouter as Router } from 'react-router-dom';
 
 function App() {
@@ -17,6 +19,8 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      
+      {/* Regular user routes */}
       <Route
         path="/"
         element={
@@ -55,6 +59,16 @@ function App() {
           <ProtectedRoute>
             <QueuePage />
           </ProtectedRoute>
+        }
+      />
+      
+      {/* Admin routes */}
+      <Route
+        path="/admin-dashboard"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
         }
       />
       <Route

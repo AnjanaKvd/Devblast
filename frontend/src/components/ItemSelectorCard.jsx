@@ -6,10 +6,26 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { motion } from 'framer-motion';
 
 export default function ItemSelectorCard({ item, isSelected, onSelect }) {
+  const handleClick = () => {
+    console.log('ItemSelectorCard clicked:', item);
+    if (onSelect && typeof onSelect === 'function') {
+      onSelect(item);
+    } else {
+      console.error('Invalid onSelect prop passed to ItemSelectorCard');
+    }
+  };
+
   return (
-    <motion.div whileTap={{ scale: 0.95 }}>
+    <motion.div 
+      whileTap={{ scale: 0.95 }}
+      whileHover={{ 
+        scale: 1.05,
+        boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
+      }}
+      transition={{ duration: 0.2 }}
+    >
       <Box
-        onClick={() => onSelect(item)}
+        onClick={handleClick}
         sx={{
           position: 'relative',
           minWidth: 120,

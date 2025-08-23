@@ -143,9 +143,9 @@ const DrinkVisualizer = ({ selectedDrink, addons = [] }) => {
   }
 
   // Determine drink type and appearance
-  const isDarkDrink = selectedDrink.type === 'soda' || selectedDrink.type === 'coffee';
-  const isMilkshake = selectedDrink.type === 'milkshake';
-  const isIceCream = selectedDrink.type === 'icecream';
+  const isDarkDrink = selectedDrink.type.includes('soda') || selectedDrink.type.includes('soft') || selectedDrink.type.includes('coffee');
+  const isMilkshake = selectedDrink.type.includes('milk') || selectedDrink.type.includes('shake');
+  const isIceCream = selectedDrink.type.includes('ice') || selectedDrink.type.includes('cream');
   const hasIce = addons.some(addon => addon.name.toLowerCase().includes('ice'));
   const hasStraw = !isIceCream;
 
@@ -609,26 +609,122 @@ export default function DrinksAndSnacksPage() {
   const drinkTrayControls = useAnimation();
   const snackTrayControls = useAnimation();
 
-  // Mock data for testing (replace with API call in production)
+  // Fetch drinks from API and categorize them
   useEffect(() => {
-    const mockData = {
-      drinks: {
-        sodas: [
-          { id: 1, name: 'Cola', price: 150, type: 'soda', imageUrl: 'https://images.unsplash.com/photo-1581636625402-29b2a704ef13?w=150&auto=format&fit=crop&q=60' },
-          { id: 2, name: 'Sprite', price: 150, type: 'soda', imageUrl: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=150&auto=format&fit=crop&q=60' },
-          { id: 3, name: 'Fanta', price: 150, type: 'soda', imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150&auto=format&fit=crop&q=60' }
-        ],
-        milkshakes: [
-          { id: 4, name: 'Chocolate Shake', price: 300, type: 'milkshake', imageUrl: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=150&auto=format&fit=crop&q=60' },
-          { id: 5, name: 'Strawberry Shake', price: 300, type: 'milkshake', imageUrl: 'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=150&auto=format&fit=crop&q=60' },
-          { id: 6, name: 'Vanilla Shake', price: 280, type: 'milkshake', imageUrl: 'https://images.unsplash.com/photo-1568901839119-631418a3910d?w=150&auto=format&fit=crop&q=60' }
-        ],
-        icecreams: [
-          { id: 7, name: 'Chocolate Ice Cream', price: 250, type: 'icecream', imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=150&auto=format&fit=crop&q=60' },
-          { id: 8, name: 'Vanilla Ice Cream', price: 220, type: 'icecream', imageUrl: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=150&auto=format&fit=crop&q=60' },
-          { id: 9, name: 'Strawberry Ice Cream', price: 250, type: 'icecream', imageUrl: 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=150&auto=format&fit=crop&q=60' }
-        ]
-      },
+    const fetchDrinks = async () => {
+      try {
+        setLoading(true);
+        const { data } = await api.getDrinks();
+        
+        // Map of drink types to image arrays for visual representation
+        const drinkTypeImages = {
+          softdrink: [
+            'https://images.unsplash.com/photo-1581636625402-29b2a704ef13?w=150&auto=format&fit=crop&q=60', // cola
+            'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=150&auto=format&fit=crop&q=60', // sprite
+            'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150&auto=format&fit=crop&q=60'  // fanta
+          ],
+          milkshake: [
+            'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=150&auto=format&fit=crop&q=60', // chocolate
+            'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=150&auto=format&fit=crop&q=60', // strawberry
+            'https://images.unsplash.com/photo-1568901839119-631418a3910d?w=150&auto=format&fit=crop&q=60'  // vanilla
+          ],
+          icecream: [
+            'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=150&auto=format&fit=crop&q=60', // chocolate
+            'https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=150&auto=format&fit=crop&q=60', // vanilla
+            'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=150&auto=format&fit=crop&q=60'  // strawberry
+          ]
+        };
+        
+        // Function to get a random image for a drink type
+        const getRandomImageForType = (type) => {
+          const images = drinkTypeImages[type] || drinkTypeImages.softdrink;
+          return images[Math.floor(Math.random() * images.length)];
+        };
+        
+        // Process and enhance the drink data
+        const drinksWithImages = data.map(drink => {
+          // Normalize the drink type for categorization
+          const normalizedType = drink.type ? drink.type.toLowerCase() : 'softdrink';
+          console.log('Processing drink:', drink.name, 'with type:', normalizedType);
+          
+          // Get appropriate image based on drink type
+          const imageUrl = getRandomImageForType(normalizedType);
+          
+          return {
+            ...drink,
+            imageUrl,
+            // Ensure consistent type formatting for filtering
+            type: normalizedType,
+            // Ensure price is a number
+            price: parseFloat(drink.price || 0)
+          };
+        });
+        
+        // Categorize drinks by type
+        const categorizedDrinks = {
+          sodas: drinksWithImages.filter(drink => 
+            drink.type === 'softdrink' || 
+            drink.type === 'soda' ||
+            drink.type.includes('soft') ||
+            drink.type.includes('soda')),
+          milkshakes: drinksWithImages.filter(drink => 
+            drink.type === 'milkshake' || 
+            drink.type.includes('milk') || 
+            drink.type.includes('shake')),
+          icecreams: drinksWithImages.filter(drink => 
+            drink.type === 'icecream' || 
+            drink.type.includes('ice') || 
+            drink.type.includes('cream'))
+        };
+        
+        console.log('Categorized drinks:', categorizedDrinks);
+        console.log('Sodas count:', categorizedDrinks.sodas.length);
+        console.log('Milkshakes count:', categorizedDrinks.milkshakes.length);
+        console.log('Icecreams count:', categorizedDrinks.icecreams.length);
+        
+        // Update state with the categorized drinks
+        setOptions(prevOptions => ({
+          ...prevOptions,
+          drinks: categorizedDrinks
+        }));
+        
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching drinks:', err);
+        setError('Failed to load drinks. Please try again.');
+        
+        // Fallback mock data for drinks if API fails
+        const mockDrinks = {
+          sodas: [
+            { id: "s1", name: 'Cola', price: 100, type: 'softdrink', imageUrl: 'https://images.unsplash.com/photo-1581636625402-29b2a704ef13?w=150&auto=format&fit=crop&q=60' },
+            { id: "s2", name: 'Sprite', price: 100, type: 'softdrink', imageUrl: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=150&auto=format&fit=crop&q=60' },
+            { id: "s3", name: 'Fanta Orange', price: 100, type: 'softdrink', imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150&auto=format&fit=crop&q=60' }
+          ],
+          milkshakes: [
+            { id: "m1", name: 'Chocolate Shake', price: 200, type: 'milkshake', imageUrl: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=150&auto=format&fit=crop&q=60' },
+            { id: "m2", name: 'Strawberry Shake', price: 200, type: 'milkshake', imageUrl: 'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=150&auto=format&fit=crop&q=60' },
+            { id: "m3", name: 'Vanilla Shake', price: 180, type: 'milkshake', imageUrl: 'https://images.unsplash.com/photo-1568901839119-631418a3910d?w=150&auto=format&fit=crop&q=60' }
+          ],
+          icecreams: [
+            { id: "i1", name: 'Chocolate Ice Cream', price: 150, type: 'icecream', imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=150&auto=format&fit=crop&q=60' },
+            { id: "i2", name: 'Vanilla Ice Cream', price: 150, type: 'icecream', imageUrl: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=150&auto=format&fit=crop&q=60' },
+            { id: "i3", name: 'Strawberry Ice Cream', price: 150, type: 'icecream', imageUrl: 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=150&auto=format&fit=crop&q=60' }
+          ]
+        };
+        
+        setOptions(prevOptions => ({
+          ...prevOptions,
+          drinks: mockDrinks
+        }));
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDrinks();
+    
+    // Temporary mock data for snacks and addons
+    const mockSnacksData = {
       snacks: {
         savory: [
           { id: 10, name: 'Samosa', price: 100, type: 'savory', imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=150&auto=format&fit=crop&q=60' },
@@ -654,8 +750,12 @@ export default function DrinksAndSnacksPage() {
       ]
     };
     
-    setOptions(mockData);
-    setLoading(false);
+    // Update options with snacks and addons
+    setOptions(prevOptions => ({
+      ...prevOptions,
+      snacks: mockSnacksData.snacks,
+      addons: mockSnacksData.addons
+    }));
     
     // If coming from dashboard or meal builder, trigger entry animation
     if (fromDashboard || fromMealBuilder) {
@@ -664,6 +764,12 @@ export default function DrinksAndSnacksPage() {
         setEntryAnimationComplete(true);
       }, 1000);
     }
+    
+    // Cleanup function
+    return () => {
+      console.log('Cleaning up DrinksAndSnacksPage resources');
+      // Cancel any pending requests or animations here if needed
+    };
   }, [fromDashboard, fromMealBuilder]);
 
   // Calculate total price
@@ -680,12 +786,48 @@ export default function DrinksAndSnacksPage() {
 
   // Handle tab change
   const handleTabChange = (event, newValue) => {
+    console.log('Tab changed to:', newValue);
     setActiveTab(newValue);
+    setActiveCategory(0); // Reset to first category when changing tabs
   };
 
   // Handle category change
   const handleCategoryChange = (event, newValue) => {
+    console.log('Category changed to:', newValue);
     setActiveCategory(newValue);
+    
+    // Check if the selected category has items, if not, make sure mock data is loaded
+    const items = getActiveCategoryItems();
+    console.log(`Active category ${newValue} has ${items ? items.length : 0} items`);
+    
+    if (!items || items.length === 0) {
+      console.log('No items found in category, ensuring mock data is loaded');
+      // Load mock data for the current category if empty
+      if (activeTab === 0) { // Drinks tab
+        const mockDrinks = {
+          sodas: [
+            { id: "s1", name: 'Cola', price: 100, type: 'softdrink', imageUrl: 'https://images.unsplash.com/photo-1581636625402-29b2a704ef13?w=150&auto=format&fit=crop&q=60' },
+            { id: "s2", name: 'Sprite', price: 100, type: 'softdrink', imageUrl: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=150&auto=format&fit=crop&q=60' },
+            { id: "s3", name: 'Fanta Orange', price: 100, type: 'softdrink', imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150&auto=format&fit=crop&q=60' }
+          ],
+          milkshakes: [
+            { id: "m1", name: 'Chocolate Shake', price: 200, type: 'milkshake', imageUrl: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=150&auto=format&fit=crop&q=60' },
+            { id: "m2", name: 'Strawberry Shake', price: 200, type: 'milkshake', imageUrl: 'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=150&auto=format&fit=crop&q=60' },
+            { id: "m3", name: 'Vanilla Shake', price: 180, type: 'milkshake', imageUrl: 'https://images.unsplash.com/photo-1568901839119-631418a3910d?w=150&auto=format&fit=crop&q=60' }
+          ],
+          icecreams: [
+            { id: "i1", name: 'Chocolate Ice Cream', price: 150, type: 'icecream', imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=150&auto=format&fit=crop&q=60' },
+            { id: "i2", name: 'Vanilla Ice Cream', price: 150, type: 'icecream', imageUrl: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=150&auto=format&fit=crop&q=60' },
+            { id: "i3", name: 'Strawberry Ice Cream', price: 150, type: 'icecream', imageUrl: 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=150&auto=format&fit=crop&q=60' }
+          ]
+        };
+        
+        setOptions(prevOptions => ({
+          ...prevOptions,
+          drinks: mockDrinks
+        }));
+      }
+    }
   };
 
   // Handle drink selection
@@ -791,20 +933,26 @@ export default function DrinksAndSnacksPage() {
   const getActiveCategoryItems = () => {
     if (activeTab === 0) { // Drinks tab
       switch (activeCategory) {
-        case 0: return options.drinks.sodas;
-        case 1: return options.drinks.milkshakes;
-        case 2: return options.drinks.icecreams;
+        case 0: 
+          console.log('Soft drinks:', options.drinks.sodas);
+          return options.drinks.sodas || [];
+        case 1: 
+          console.log('Milkshakes:', options.drinks.milkshakes);
+          return options.drinks.milkshakes || [];
+        case 2: 
+          console.log('Ice creams:', options.drinks.icecreams);
+          return options.drinks.icecreams || [];
         default: return [];
       }
     } else if (activeTab === 1) { // Snacks tab
       switch (activeCategory) {
-        case 0: return options.snacks.savory;
-        case 1: return options.snacks.sweet;
-        case 2: return options.snacks.other;
+        case 0: return options.snacks.savory || [];
+        case 1: return options.snacks.sweet || [];
+        case 2: return options.snacks.other || [];
         default: return [];
       }
     } else { // Addons tab
-      return options.addons;
+      return options.addons || [];
     }
   };
 
@@ -1023,7 +1171,29 @@ export default function DrinksAndSnacksPage() {
             />
           </Box>
         ) : error ? (
-          <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
+          <Alert 
+            severity="error" 
+            sx={{ 
+              my: 2, 
+              bgcolor: 'rgba(50,20,20,0.7)', 
+              color: 'white',
+              border: '1px solid rgba(255,100,100,0.3)',
+              '& .MuiAlert-icon': {
+                color: '#ff8080'
+              }
+            }}
+          >
+            {error}
+            <Button 
+              variant="outlined" 
+              size="small" 
+              color="error" 
+              onClick={() => window.location.reload()} 
+              sx={{ ml: 2, color: '#ff8080', borderColor: '#ff8080' }}
+            >
+              Retry
+            </Button>
+          </Alert>
         ) : showConfirmation ? (
           // Confirmation Screen
           <Box 
@@ -1326,16 +1496,19 @@ export default function DrinksAndSnacksPage() {
                           icon={<LocalBarIcon fontSize="small" />} 
                           label="Soft Drinks" 
                           iconPosition="start"
+                          onClick={() => console.log('Soft Drinks tab clicked')}
                         />
                         <Tab 
                           icon={<LocalCafeIcon fontSize="small" />} 
                           label="Milkshakes" 
                           iconPosition="start"
+                          onClick={() => console.log('Milkshakes tab clicked')}
                         />
                         <Tab 
                           icon={<IcecreamIcon fontSize="small" />} 
                           label="Ice Cream" 
                           iconPosition="start"
+                          onClick={() => console.log('Ice Cream tab clicked')}
                         />
                       </>
                     ) : (
@@ -1364,26 +1537,58 @@ export default function DrinksAndSnacksPage() {
                 {/* Item selection grid */}
                 <Box sx={{ overflow: 'auto', flex: 1 }}>
                   <Grid container spacing={2}>
-                    {getActiveCategoryItems().map(item => (
-                      <Grid item xs={6} sm={4} key={item.id}>
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ 
-                            type: 'spring', 
-                            stiffness: 300,
-                            damping: 20,
-                            delay: item.id * 0.05 % 0.5 // Staggered animation
+                    {getActiveCategoryItems().length > 0 ? (
+                      getActiveCategoryItems().map(item => (
+                        <Grid item xs={6} sm={4} key={item.id}>
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ 
+                              type: 'spring', 
+                              stiffness: 300,
+                              damping: 20,
+                              delay: item.id * 0.05 % 0.5 // Staggered animation
+                            }}
+                          >
+                            <ItemSelectorCard 
+                              item={item} 
+                              isSelected={isItemSelected(item)}
+                              onSelect={getSelectionHandler()}
+                            />
+                          </motion.div>
+                        </Grid>
+                      ))
+                    ) : (
+                      <Grid item xs={12}>
+                        <Box 
+                          sx={{ 
+                            p: 3, 
+                            textAlign: 'center',
+                            bgcolor: 'rgba(50,50,70,0.3)',
+                            borderRadius: 2,
+                            border: '1px dashed rgba(100,100,255,0.3)'
                           }}
                         >
-                          <ItemSelectorCard 
-                            item={item} 
-                            isSelected={isItemSelected(item)}
-                            onSelect={getSelectionHandler()}
-                          />
-                        </motion.div>
+                          <Typography color="rgba(255,255,255,0.7)">
+                            No items found in this category
+                          </Typography>
+                          {activeTab === 0 && (
+                            <Button 
+                              variant="outlined" 
+                              size="small" 
+                              onClick={() => setActiveCategory((activeCategory + 1) % 3)}
+                              sx={{ 
+                                mt: 2,
+                                color: 'rgba(100,180,255,0.9)',
+                                borderColor: 'rgba(100,180,255,0.3)'
+                              }}
+                            >
+                              Try another category
+                            </Button>
+                          )}
+                        </Box>
                       </Grid>
-                    ))}
+                    )}
                   </Grid>
                 </Box>
                 

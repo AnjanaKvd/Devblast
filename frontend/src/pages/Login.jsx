@@ -15,7 +15,13 @@ export default function Login() {
     try {
       const { data } = await api.login(formData);
       login(data);
-      navigate('/');
+      
+      // Redirect based on role
+      if (data.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred');
     }

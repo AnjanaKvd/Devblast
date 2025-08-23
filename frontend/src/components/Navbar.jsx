@@ -51,9 +51,6 @@ export default function EnhancedNavbar({ userName = 'Student', onLogout }) {
     navigate('/profile');
   };
 
-  // check user is staff
-  const isStaff = user.isStaff;
-
   return (
     <AppBar
       position="static"
@@ -93,7 +90,6 @@ export default function EnhancedNavbar({ userName = 'Student', onLogout }) {
           >
             View Queue
           </Button>
-          if (isStaff) {
             <Button
               color="inherit"
               startIcon={<AdminPanelSettingsIcon />}
@@ -101,7 +97,6 @@ export default function EnhancedNavbar({ userName = 'Student', onLogout }) {
             >
               Staff Dashboard
             </Button>
-          }
         </Box>
 
         {/* This Box will grow and push the profile section to the right */}
