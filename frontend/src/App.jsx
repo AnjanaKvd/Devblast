@@ -8,7 +8,7 @@ import Profile from './pages/Profile';
 import MealBuilderPage from './pages/MealBuilderPage';
 import DrinksAndSnacksPage from './pages/DrinksAndSnacksPage';
 import QueuePage from './pages/QueuePage';
-import QueueDashboard from './pages/QueueDashboard';
+import QueueDashboardPage from './pages/QueueDashboardPage';
 import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -74,9 +74,9 @@ function App() {
       <Route
         path="/queue-dashboard"
         element={
-          <ProtectedRoute>
-            <QueueDashboard />
-          </ProtectedRoute>
+          <AdminRoute>
+            <QueueDashboardPage />
+          </AdminRoute>
         }
       />
     </Routes>

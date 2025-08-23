@@ -17,10 +17,25 @@ export const getOrders = async (req, res) => {
 
 export const addOrder = async (req, res) => {
   try {
-    const { items, totalAmount, customerIndex } = req.body;
+    const { items, totalAmount, customerIndex, scheduledTime } = req.body;
 
     if (!items || !totalAmount || !customerIndex) {
       return res.status(400).json({ message: "Items, total amount, and customer index are required" });
+    }
+
+    // Validate scheduled time
+    const orderTime = scheduledTime ? new Date(scheduledTime) : new Date();
+    const now = new Date();
+    
+    // Don't allow past times (except within a small buffer for clock differences)
+    if (orderTime < new Date(now.getTime() - 5 * 60 * 1000)) {
+      return res.status(400).json({ message: "Cannot schedule order in the past" });
+    }
+    
+    // Optional: Set a maximum advance booking time (e.g., 24 hours)
+    const maxAdvanceTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    if (orderTime > maxAdvanceTime) {
+      return res.status(400).json({ message: "Cannot schedule order more than 24 hours in advance" });
     }
 
     // Generate a unique token for the order
@@ -32,7 +47,8 @@ export const addOrder = async (req, res) => {
       customerIndex,
       token: orderToken,
       counter: 1, // Initialize counter
-      status: 'pending' // Set initial status
+      status: 'pending', // Set initial status
+      scheduledTime: orderTime
     });
 
     await newOrder.save();
