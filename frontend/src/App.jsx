@@ -6,6 +6,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
+import RiceAndCurry from './pages/admin/riceandcurry';
+import ViewRiceAndCurry from './pages/admin/ViewRiceAndCurry';
 
 function App() {
   return (
@@ -26,6 +28,22 @@ function App() {
           <ProtectedRoute>
             <Profile />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/riceandcurry"
+        element={
+          // <ProtectedRoute>
+            <RiceAndCurry />
+          // </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/viewriceandcurry"
+        element={
+          // <ProtectedRoute>
+            <ViewRiceAndCurry />
+          // </ProtectedRoute>
         }
       />
     </Routes>

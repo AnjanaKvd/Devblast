@@ -23,3 +23,20 @@ export const getProfile = () => api.get('/users/profile');
 export const changeName = (data) => api.post('/users/change-name', data);
 export const changeEmail = (data) => api.post('/users/change-email', data);
 export const changePassword = (data) => api.post('/users/change-password', data);
+
+export const addRiceAndCurry = (data) => api.post('/meals/riceandcurry', data);
+export const uploadImage = (formData) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const headers = {
+    'Content-Type': 'multipart/form-data',
+  };
+  
+  if (user?.token) {
+    headers.Authorization = `Bearer ${user.token}`;
+  }
+  
+  return axios.post(`${API_URL}/upload`, formData, {
+    headers,
+  });
+};
+export const getRiceAndCurry = () => api.get('/meals/riceandcurry');
