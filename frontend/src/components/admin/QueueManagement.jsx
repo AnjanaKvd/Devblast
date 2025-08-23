@@ -712,22 +712,27 @@ const QueueManagement = () => {
         </Grid>
       </Paper>
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : filteredSortedOrders.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
+      {/* Main Queue Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Active Queue
+        </Typography>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : queueOrders.length === 0 ? (
+        <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2, mb: 3 }}>
           <Typography variant="h6" gutterBottom>
-            No Orders Found
+            No Active Orders
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Try changing your filters or search criteria
+            The queue is currently empty
           </Typography>
         </Paper>
       ) : (
         <Grid container spacing={2}>
-          {filteredSortedOrders.map((order) => {
+          {queueOrders.map((order) => {
             const waitTime = calculateWaitTime(order.createdAt);
             return (
               <Grid item xs={12} sm={6} md={4} key={order._id}>
@@ -1035,6 +1040,7 @@ const QueueManagement = () => {
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         message={snackbar.message}
       />
+    </Box>
     </Box>
   );
 };
