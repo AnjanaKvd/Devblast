@@ -17,47 +17,30 @@ export const getOrders = async (req, res) => {
 
 export const addOrder = async (req, res) => {
   try {
-    const { items, totalAmount, customerIndex, scheduledTime } = req.body;
-
-    if (!items || !totalAmount || !customerIndex) {
-      return res.status(400).json({ message: "Items, total amount, and customer index are required" });
-    }
-
-    // Validate scheduled time
-    const orderTime = scheduledTime ? new Date(scheduledTime) : new Date();
-    const now = new Date();
+    const { items, totalPrice } = req.body;
+    const userId = req.user.id;
     
-    // Don't allow past times (except within a small buffer for clock differences)
-    if (orderTime < new Date(now.getTime() - 5 * 60 * 1000)) {
-      return res.status(400).json({ message: "Cannot schedule order in the past" });
-    }
-    
-    // Optional: Set a maximum advance booking time (e.g., 24 hours)
-    const maxAdvanceTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    if (orderTime > maxAdvanceTime) {
-      return res.status(400).json({ message: "Cannot schedule order more than 24 hours in advance" });
-    }
+    // Generate a simple order number (in a real app, use a more robust method)
+    const orderNumber = Math.floor(100 + Math.random() * 900);
 
-    // Generate a unique token for the order
-    const orderToken = generateOrderToken();
-    
     const newOrder = new Order({
+      user: userId,
       items,
-      totalAmount,
-      customerIndex,
-      token: orderToken,
-      counter: 1, // Initialize counter
-      status: 'pending', // Set initial status
-      scheduledTime: orderTime
+      totalPrice,
+      orderNumber
     });
 
-    await newOrder.save();
-    res.status(201).json({
-      ...newOrder._doc,
-      orderToken // Send the generated token back to the client
-    });
+    const savedOrder = await newOrder.save();
+
+    // Add the new order to the live in-memory queue
+    addToQueue(savedOrder.toObject()); // Use .toObject() for a plain JS object
+
+    // NOTE: The broadcast will happen within the queue service,
+    // so no need to emit from here. The system is now event-driven.
+
+    res.status(201).json(savedOrder);
   } catch (error) {
-    res.status(500).json({ message: "Error adding order", error: error.message });
+    res.status(500).json({ message: 'Error creating order', error: error.message });
   }
 };
 
@@ -112,4 +95,9 @@ export const deleteOrder = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Error deleting order", error: error.message });
   }
+};
+
+// New controller to get the current state of the queue via HTTP if needed
+export const getCurrentQueue = (req, res) => {
+    res.status(200).json(getLiveQueue());
 };

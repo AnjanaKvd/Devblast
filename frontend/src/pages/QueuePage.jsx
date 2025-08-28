@@ -323,7 +323,7 @@ const QueuePage = () => {
                       <Box><Typography variant="caption" color="text.secondary" display="block">Pickup Time</Typography><Typography variant="body2" fontWeight="medium">{order.scheduledTime ? formatDate(order.scheduledTime) : 'ASAP'}</Typography></Box>
                     </Box>
                   </Box>
-                  {order.status === 'active' ? (
+                  {order.status === 'pending' ? (
                     <Chip icon={<motion.div animate={{ scale: [1, 0.8, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ width: 8, height: 8, borderRadius: '50%', background: '#4caf50' }} />} label="Now Serving" color="success" size="small" sx={{ mb: '8px' }} />
                   ) : (
                     <Chip label={`Position: ${order.position}`} variant="outlined" size="small" sx={{ mb: '8px' }} />
